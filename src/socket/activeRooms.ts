@@ -1,0 +1,72 @@
+class ActiveRooms {
+    private static instance: ActiveRooms;
+    private rooms: { [key: string]: { users: Set<string>; userCount: number } };
+
+    private constructor() {
+        this.rooms = {};
+    }
+
+    public static getInstance(): ActiveRooms {
+        if (!ActiveRooms.instance) {
+            ActiveRooms.instance = new ActiveRooms();
+        }
+        return ActiveRooms.instance;
+    }
+
+    public addRoom(roomName: string): void {
+        if (!this.rooms[roomName]) {
+            this.rooms[roomName] = { users: new Set<string>(), userCount: 0 };
+        }
+    }
+
+    public removeRoom(roomName: string): void {
+        delete this.rooms[roomName];
+    }
+
+    public addUserToRoom(roomName: string, username: string): void {
+        this.addRoom(roomName); // Ensure the room exists
+        if (!this.rooms[roomName].users.has(username)) {
+            this.rooms[roomName].users.add(username);
+            this.rooms[roomName].userCount++;
+        }
+    }
+
+    public removeUserFromRoom(roomName: string, username: string): void | string {
+        if (this.rooms[roomName] && this.rooms[roomName].users.has(username)) {
+            this.rooms[roomName].users.delete(username);
+            this.rooms[roomName].userCount--;
+            if (this.rooms[roomName].userCount === 0) {
+                console.log('Room empty, will be deleted. Room name:', roomName);
+                this.removeRoom(roomName);
+                return roomName;
+            }
+        }
+    }
+
+    public getRoomUserCount(roomName: string): number {
+        return this.rooms[roomName] ? this.rooms[roomName].userCount : 0;
+    }
+
+    public getActiveRooms(): { [key: string]: number } {
+        const activeRooms: { [key: string]: number } = {};
+        for (const roomName in this.rooms) {
+            activeRooms[roomName] = this.rooms[roomName].userCount;
+        }
+        return activeRooms;
+    }
+
+    public hasRoom(roomName: string): boolean {
+        return !!this.rooms[roomName];
+    }
+
+    public getRoomByUser(username: string): string | null {
+        for (const roomName in this.rooms) {
+            if (this.rooms[roomName].users.has(username)) {
+                return roomName;
+            }
+        }
+        return null;
+    }
+}
+
+export const activeRooms = ActiveRooms.getInstance();

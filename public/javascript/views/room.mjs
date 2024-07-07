@@ -1,4 +1,4 @@
-import { createElement } from '../helpers/dom-helper.mjs';
+import { addClass, createElement, removeClass } from '../helpers/dom-helper.mjs';
 
 const appendRoomElement = ({ name, numberOfUsers, onJoin = () => {} }) => {
     const roomsContainer = document.querySelector('#rooms-wrapper');
@@ -49,4 +49,14 @@ const getNumberOfUsersString = numberOfUsers => `${numberOfUsers} connected`;
 
 const removeRoomElement = name => document.querySelector(`.room[data-room-name='${name}']`)?.remove();
 
-export { appendRoomElement, updateNumberOfUsersInRoom, removeRoomElement };
+const showRoomJoined = (elementsToHide, elementToShow) => {
+    elementsToHide.forEach(element => removeClass(element, 'display-none'));
+    addClass(elementToShow, 'display-none');
+};
+
+const hideRoomJoined = (elementsToHide, elementToShow) => {
+    elementsToHide.forEach(element => addClass(element, 'display-none'));
+    removeClass(elementToShow, 'display-none');
+};
+
+export { appendRoomElement, updateNumberOfUsersInRoom, removeRoomElement, showRoomJoined, hideRoomJoined };
