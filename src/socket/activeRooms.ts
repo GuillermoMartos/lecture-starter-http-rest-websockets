@@ -1,6 +1,11 @@
+interface User_Room_Info {
+    ready: boolean;
+    progress: number;
+}
+
 class ActiveRooms {
     private static instance: ActiveRooms;
-    private rooms: { [key: string]: { users: Set<string>; userCount: number } };
+    private rooms: { [key: string]: { users: Map<string, User_Room_Info>; userCount: number } };
 
     private constructor() {
         this.rooms = {};
@@ -15,7 +20,7 @@ class ActiveRooms {
 
     public addRoom(roomName: string): void {
         if (!this.rooms[roomName]) {
-            this.rooms[roomName] = { users: new Set<string>(), userCount: 0 };
+            this.rooms[roomName] = { users: new Map<string, User_Room_Info>(), userCount: 0 };
         }
     }
 
@@ -26,7 +31,7 @@ class ActiveRooms {
     public addUserToRoom(roomName: string, username: string): void {
         this.addRoom(roomName); // Ensure the room exists
         if (!this.rooms[roomName].users.has(username)) {
-            this.rooms[roomName].users.add(username);
+            this.rooms[roomName].users.set(username, { ready: false, progress: 0 });
             this.rooms[roomName].userCount++;
         }
     }
@@ -43,8 +48,9 @@ class ActiveRooms {
         }
     }
 
-    public getRoomUserCount(roomName: string): number {
-        return this.rooms[roomName] ? this.rooms[roomName].userCount : 0;
+    public getRoomUsers(roomName: string): [string, User_Room_Info][] {
+        // we cast to array, because client is JS and cant handle Set
+        return Array.from(this.rooms[roomName].users);
     }
 
     public getActiveRooms(): { [key: string]: number } {

@@ -1,6 +1,7 @@
 import { showInputModal, showMessageModal } from './views/modal.mjs';
 import { SOCKET_EVENTS } from './constants/constants.mjs';
 import { appendRoomElement, hideRoomJoined, showRoomJoined } from './views/room.mjs';
+import { appendUserElement, removeUserElement } from './views/user.mjs';
 
 const username = sessionStorage.getItem('username');
 if (!username) {
@@ -33,6 +34,7 @@ function backToRoomsDisplayer() {
     const roomName = quitRoomBtn.parentElement.querySelector('#room-name').innerText;
     hideRoomJoined(allNotDisplayedRoomElements, roomsElementParent);
     setActiveRoomId(null);
+    removeUserElement(username);
     socket.emit(SOCKET_EVENTS.LEAVE_ROOM, roomName);
 }
 
@@ -53,6 +55,7 @@ function createNewRoom() {
             });
             sessionStorage.removeItem('my_new_room');
             roomElemetCreated.querySelector('button').click();
+            appendUserElement({ username: username, ready: false, isCurrentUser: true });
         }
     });
 }
@@ -70,6 +73,13 @@ function refreshDOMActiveRooms(activeRooms) {
         });
     }
 }
+
+const roomUserDataMapper = roomUsersData => {
+    document.querySelector('#users-wrapper').innerHTML = '';
+    roomUsersData.map(el => {
+        appendUserElement({ username: el[0], ready: el[1].ready, isCurrentUser: el[0] === username });
+    });
+};
 
 createRoomButton.addEventListener('click', createNewRoom);
 quitRoomBtn.addEventListener('click', backToRoomsDisplayer);
@@ -98,4 +108,8 @@ socket.on(SOCKET_EVENTS.INVALID_CHECKED_ROOM_NAME, ({ message, activeRooms }) =>
 
 socket.on(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms => {
     refreshDOMActiveRooms(activeRooms);
+});
+
+socket.on(SOCKET_EVENTS.MY_ROOM_INFO, roomUsersData => {
+    roomUserDataMapper(roomUsersData);
 });

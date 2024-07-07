@@ -47,6 +47,7 @@ export default (namespace: Namespace) => {
             }
             activeRooms.addUserToRoom(roomName, username);
             socket.join(roomName);
+            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(roomName));
             socket.broadcast.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
         });
 
@@ -54,6 +55,7 @@ export default (namespace: Namespace) => {
             socket.leave(roomName);
             activeRooms.removeUserFromRoom(roomName, username);
             //this will also be necesary info for the self socket user
+            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(roomName));
             namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
         });
 
