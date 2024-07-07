@@ -1,3 +1,9 @@
+export interface Update_User_WS_Request {
+    roomName: string;
+    username: string;
+    update: User_Room_Info;
+}
+
 interface User_Room_Info {
     ready: boolean;
     progress: number;
@@ -48,6 +54,10 @@ class ActiveRooms {
         }
     }
 
+    public getRoomUserCounter(roomName: string): number {
+        return this.rooms[roomName].userCount;
+    }
+
     public getRoomUsers(roomName: string): [string, User_Room_Info][] {
         // we cast to array, because client is JS and cant handle Set
         return Array.from(this.rooms[roomName].users);
@@ -72,6 +82,12 @@ class ActiveRooms {
             }
         }
         return null;
+    }
+
+    public updateUserInRoom(roomName: string, username: string, update: User_Room_Info): void {
+        if (this.rooms[roomName] && this.rooms[roomName].users.has(username)) {
+            this.rooms[roomName].users.set(username, update);
+        }
     }
 }
 

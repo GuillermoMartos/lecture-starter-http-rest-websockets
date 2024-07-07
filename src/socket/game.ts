@@ -1,7 +1,8 @@
 import { Namespace } from 'socket.io';
 import { activeUsers } from './activeUsers.js';
-import { activeRooms } from './activeRooms.js';
+import { Update_User_WS_Request, activeRooms } from './activeRooms.js';
 import { SOCKET_EVENTS } from './constants.js';
+import * as config from './config.js';
 
 export default (namespace: Namespace) => {
     namespace.on(SOCKET_EVENTS.CONNECTION, socket => {
@@ -46,9 +47,23 @@ export default (namespace: Namespace) => {
                 return;
             }
             activeRooms.addUserToRoom(roomName, username);
-            socket.join(roomName);
+
+            if (activeRooms.getRoomUserCounter(roomName) <= config.MAXIMUM_USERS_FOR_ONE_ROOM) {
+                socket.join(roomName);
+                namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(roomName));
+                socket.broadcast.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
+            } else {
+                socket.emit(SOCKET_EVENTS.INVALID_CHECKED_ROOM_NAME, {
+                    message: `Room ${roomName} is full. Choose another.`,
+                    activeRooms: activeRooms.getActiveRooms()
+                });
+            }
+        });
+
+        socket.on(SOCKET_EVENTS.UPDATE_USER_ROOM_INFO, (requestUserData: Update_User_WS_Request) => {
+            const { roomName, username, update } = requestUserData;
+            activeRooms.updateUserInRoom(roomName, username, update);
             namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(roomName));
-            socket.broadcast.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
         });
 
         socket.on(SOCKET_EVENTS.LEAVE_ROOM, roomName => {
@@ -63,6 +78,8 @@ export default (namespace: Namespace) => {
             const userActiveRoom = activeRooms.getRoomByUser(username);
             if (userActiveRoom) {
                 const isemptyRoomSpace = activeRooms.removeUserFromRoom(userActiveRoom, username);
+                namespace.to(userActiveRoom).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(userActiveRoom));
+                namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
                 if (isemptyRoomSpace) {
                     socket.rooms.delete(userActiveRoom);
                 }

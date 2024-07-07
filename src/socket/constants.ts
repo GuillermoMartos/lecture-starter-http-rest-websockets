@@ -8,5 +8,6 @@ export const enum SOCKET_EVENTS {
     JOIN_ROOM = 'join_room',
     LEAVE_ROOM = 'leave_room',
     ACTIVE_ROOMS_INFO = 'active_rooms_info',
-    MY_ROOM_INFO = 'my_room_info'
+    MY_ROOM_INFO = 'my_room_info',
+    UPDATE_USER_ROOM_INFO = 'update_user_room_info'
 }

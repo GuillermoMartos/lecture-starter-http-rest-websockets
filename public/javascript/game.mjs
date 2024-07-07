@@ -1,7 +1,7 @@
 import { showInputModal, showMessageModal } from './views/modal.mjs';
 import { SOCKET_EVENTS } from './constants/constants.mjs';
 import { appendRoomElement, hideRoomJoined, showRoomJoined } from './views/room.mjs';
-import { appendUserElement, removeUserElement } from './views/user.mjs';
+import { appendUserElement, changeReadyStatus, removeUserElement, setProgress } from './views/user.mjs';
 
 const username = sessionStorage.getItem('username');
 if (!username) {
@@ -18,6 +18,12 @@ const gameJoinedRoomName = document.getElementById('room-name');
 const allNotDisplayedRoomElements = document.querySelectorAll('.display-none');
 const roomsElementParent = document.getElementById('rooms-page');
 const quitRoomBtn = document.getElementById('quit-room-btn');
+const readyRoomBtn = document.getElementById('ready-btn');
+const usersLoggedWrapper = document.getElementById('users-logged-info');
+
+function getRoomName() {
+    return quitRoomBtn.parentElement.querySelector('#room-name').innerText;
+}
 
 function onJoinLogic(element) {
     const roomName = element.target.getAttribute('data-room-name');
@@ -31,7 +37,7 @@ function onJoinLogic(element) {
 }
 
 function backToRoomsDisplayer() {
-    const roomName = quitRoomBtn.parentElement.querySelector('#room-name').innerText;
+    const roomName = getRoomName();
     hideRoomJoined(allNotDisplayedRoomElements, roomsElementParent);
     setActiveRoomId(null);
     removeUserElement(username);
@@ -78,11 +84,25 @@ const roomUserDataMapper = roomUsersData => {
     document.querySelector('#users-wrapper').innerHTML = '';
     roomUsersData.map(el => {
         appendUserElement({ username: el[0], ready: el[1].ready, isCurrentUser: el[0] === username });
+        setProgress({ username: el[0], progress: el[1].progress });
     });
 };
 
+function setPlayerReady() {
+    const isPlayerReady =
+        document.querySelector(`.ready-status[data-username='${username}']`).getAttribute('data-ready') === 'false';
+    const roomName = getRoomName();
+    changeReadyStatus({ username: username, ready: isPlayerReady });
+    socket.emit(SOCKET_EVENTS.UPDATE_USER_ROOM_INFO, {
+        roomName,
+        username: username,
+        update: { progress: 0, ready: isPlayerReady }
+    });
+}
+
 createRoomButton.addEventListener('click', createNewRoom);
 quitRoomBtn.addEventListener('click', backToRoomsDisplayer);
+readyRoomBtn.addEventListener('click', setPlayerReady);
 
 socket.on(SOCKET_EVENTS.INVALID_CHECKED_USER, bad_user => {
     showMessageModal({
@@ -96,7 +116,10 @@ socket.on(SOCKET_EVENTS.INVALID_CHECKED_USER, bad_user => {
 
 socket.on(SOCKET_EVENTS.USER_JOINED, data => {
     const { new_user, activeUsers } = data;
-    //use this in temporal msg?
+    showMessageModal({
+        message: `${new_user} has joined. ${activeUsers} users online now.`,
+        placeModalInOtherElement: usersLoggedWrapper
+    });
     console.log(`${new_user} has joined. ${activeUsers} users online now.`);
 });
 

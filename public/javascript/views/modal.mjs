@@ -1,4 +1,4 @@
-import { createElement } from '../helpers/dom-helper.mjs';
+import { addClass, createElement, removeClass } from '../helpers/dom-helper.mjs';
 
 const showInputModal = ({ title, onChange = () => {}, onSubmit = () => {} }) => {
     const rootElement = document.querySelector('#root');
@@ -20,6 +20,9 @@ const showInputModal = ({ title, onChange = () => {}, onSubmit = () => {} }) => 
 
     submitButton.addEventListener('click', () => {
         modalElement.remove();
+        if (!inputElement.value) {
+            return;
+        }
         onSubmit();
     });
     inputElement.addEventListener('change', e => onChange(e.target.value));
@@ -64,7 +67,7 @@ const showResultsModal = ({ usersSortedArray, onClose = () => {} }) => {
     });
 };
 
-const showMessageModal = ({ message, onClose = () => {} }) => {
+const showMessageModal = ({ message, onClose = () => {}, placeModalInOtherElement = null }) => {
     const rootElement = document.querySelector('#root');
 
     const modalElement = createModalElement(message);
@@ -76,7 +79,16 @@ const showMessageModal = ({ message, onClose = () => {} }) => {
     });
 
     modalElement.append(getFooter([closeButton]));
-    rootElement.append(modalElement);
+    if (placeModalInOtherElement) {
+        removeClass(modalElement, 'modal');
+        addClass(modalElement, 'logged-user-message');
+        placeModalInOtherElement.append(modalElement);
+        setTimeout(() => {
+            modalElement.remove();
+        }, 3000);
+    } else {
+        rootElement.append(modalElement);
+    }
 
     closeButton.addEventListener('click', () => {
         modalElement.remove();

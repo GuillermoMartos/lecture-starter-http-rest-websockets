@@ -33,7 +33,9 @@ const appendRoomElement = ({ name, numberOfUsers, onJoin = () => {} }) => {
     });
 
     roomsContainer.append(roomElement);
-
+    if (numberOfUsers === 3) {
+        addClass(roomElement, 'room-busy');
+    }
     joinButton.addEventListener('click', onJoin);
 
     return roomElement;

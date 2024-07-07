@@ -49,6 +49,8 @@ const appendUserElement = ({ username, ready, isCurrentUser }) => {
 };
 
 const changeReadyStatus = ({ username, ready }) => {
+    const readyBtn = document.getElementById('ready-btn');
+    ready ? (readyBtn.innerText = 'NOT READY') : (readyBtn.innerText = 'READY');
     const readyStatusElement = document.querySelector(`.ready-status[data-username='${username}']`);
     readyStatusElement.innerHTML = getReadySign(ready);
     readyStatusElement.dataset.ready = Boolean(ready);
