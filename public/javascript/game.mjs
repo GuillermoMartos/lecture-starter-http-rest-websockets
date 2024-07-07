@@ -6,6 +6,7 @@ const username = sessionStorage.getItem('username');
 if (!username) {
     window.location.replace('/signin');
 }
+document.getElementById('username-message').innerText = `${username} 🟢 online`;
 let activeRoomId = null;
 const setActiveRoomId = roomId => {
     activeRoomId = roomId;

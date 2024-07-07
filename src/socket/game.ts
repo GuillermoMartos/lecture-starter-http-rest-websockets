@@ -50,6 +50,13 @@ export default (namespace: Namespace) => {
             socket.broadcast.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
         });
 
+        socket.on(SOCKET_EVENTS.LEAVE_ROOM, roomName => {
+            socket.leave(roomName);
+            activeRooms.removeUserFromRoom(roomName, username);
+            //this will also be necesary info for the self socket user
+            namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
+        });
+
         socket.on(SOCKET_EVENTS.DISCONNECT, reason => {
             const userActiveRoom = activeRooms.getRoomByUser(username);
             if (userActiveRoom) {
