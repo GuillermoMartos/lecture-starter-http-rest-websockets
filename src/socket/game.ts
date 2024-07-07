@@ -36,6 +36,20 @@ export default (namespace: Namespace) => {
             }
         });
 
+        socket.on(SOCKET_EVENTS.JOIN_ROOM, roomName => {
+            if (!activeRooms.hasRoom(roomName)) {
+                // just in case it disconnect while joining
+                socket.emit(SOCKET_EVENTS.INVALID_CHECKED_ROOM_NAME, {
+                    message: `Room name ${roomName} not available. Choose another.`,
+                    activeRooms: activeRooms.getActiveRooms()
+                });
+                return;
+            }
+            activeRooms.addUserToRoom(roomName, username);
+            socket.join(roomName);
+            socket.broadcast.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
+        });
+
         socket.on(SOCKET_EVENTS.DISCONNECT, reason => {
             const userActiveRoom = activeRooms.getRoomByUser(username);
             if (userActiveRoom) {
