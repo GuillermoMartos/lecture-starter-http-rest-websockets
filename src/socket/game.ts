@@ -69,8 +69,8 @@ export default (namespace: Namespace) => {
         socket.on(SOCKET_EVENTS.LEAVE_ROOM, roomName => {
             socket.leave(roomName);
             const isemptyRoomSpace = activeRooms.removeUserFromRoom(roomName, username);
+            namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
             if (isemptyRoomSpace) {
-                namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
                 socket.rooms.delete(isemptyRoomSpace);
                 return;
             }
@@ -82,8 +82,8 @@ export default (namespace: Namespace) => {
             const userActiveRoom = activeRooms.getRoomByUser(username);
             if (userActiveRoom) {
                 const isemptyRoomSpace = activeRooms.removeUserFromRoom(userActiveRoom, username);
+                namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
                 if (isemptyRoomSpace) {
-                    namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
                     socket.rooms.delete(userActiveRoom);
                     return;
                 }
