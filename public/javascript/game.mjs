@@ -1,9 +1,8 @@
 import { showInputModal, showMessageModal } from './views/modal.mjs';
-import { SOCKET_EVENTS, SECONDS_TIMER_BEFORE_START_GAME, SECONDS_FOR_GAME } from './constants/constants.mjs';
+import { SOCKET_EVENTS } from './constants/constants.mjs';
 import { appendRoomElement, hideRoomJoined, showRoomJoined } from './views/room.mjs';
 import { appendUserElement, changeReadyStatus, removeUserElement, setProgress } from './views/user.mjs';
-import { addClass, removeClass } from './helpers/dom-helper.mjs';
-import { fetchRandomText } from './services/textService.js';
+import { handleGameStart } from './helpers/game-helper.js';
 
 const username = sessionStorage.getItem('username');
 if (!username) {
@@ -14,15 +13,18 @@ let activeRoomId = null;
 const setActiveRoomId = roomId => {
     activeRoomId = roomId;
 };
-const socket = io('http://localhost:3001/game', { query: { username } });
+let gameStarted = null;
+const setGameStarted = isStarted => {
+    gameStarted = isStarted;
+};
+export const socket = io('http://localhost:3001/game', { query: { username } });
 const createRoomButton = document.getElementById('add-room-btn');
 const gameJoinedRoomName = document.getElementById('room-name');
 const roomGameParentElement = document.getElementById('game-page');
 const roomsElementParent = document.getElementById('rooms-page');
 const quitRoomBtn = document.getElementById('quit-room-btn');
 const readyRoomBtn = document.getElementById('ready-btn');
-const roomChallengeTimer = document.getElementById('timer');
-const roomGetReadyTimer = document.getElementById('game-timer');
+
 const usersLoggedWrapper = document.getElementById('users-logged-info');
 
 function getRoomName() {
@@ -104,36 +106,18 @@ function setPlayerReady() {
     });
 }
 
+export function updateUserProgress(progress, roomName) {
+    socket.emit(SOCKET_EVENTS.UPDATE_USER_ROOM_INFO, {
+        roomName,
+        username: username,
+        update: { progress }
+    });
+}
+
 async function roomLogicHandler(roomData) {
-    if (roomData.isReady) {
-        const textContainer = document.getElementById('text-container');
-        const fetchTextResponse = await fetchRandomText(roomData.roomName);
-        textContainer.innerText = fetchTextResponse;
-        const getReadyTimerSeconds = document.getElementById('game-timer-seconds');
-        addClass(readyRoomBtn, 'display-none');
-        addClass(quitRoomBtn, 'display-none');
-        removeClass(roomGetReadyTimer, 'display-none');
-        let decreaserGetReadyTimer = SECONDS_TIMER_BEFORE_START_GAME;
-        const getReadyInterval = setInterval(() => {
-            if (decreaserGetReadyTimer > 0) {
-                getReadyTimerSeconds.innerText = decreaserGetReadyTimer;
-                decreaserGetReadyTimer--;
-            } else {
-                addClass(roomGetReadyTimer, 'display-none');
-                removeClass(textContainer, 'display-none');
-                removeClass(roomChallengeTimer, 'display-none');
-                clearInterval(getReadyInterval);
-                let decreaserChallengeTime = SECONDS_FOR_GAME;
-                const challengeInterval = setInterval(() => {
-                    if (decreaserChallengeTime > 0) {
-                        roomChallengeTimer.innerText = `Seconds left: ${decreaserChallengeTime}`;
-                        decreaserChallengeTime--;
-                    } else {
-                        clearInterval(challengeInterval);
-                    }
-                }, 1000);
-            }
-        }, 1000);
+    if (roomData.isReady && !gameStarted) {
+        setGameStarted(true);
+        handleGameStart(roomData);
     }
 }
 
@@ -172,8 +156,10 @@ socket.on(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms => {
 
 socket.on(SOCKET_EVENTS.MY_ROOM_USER_INFO, roomUsersData => {
     roomUserDataMapper(roomUsersData);
+    console.log('data user', roomUsersData);
 });
 
 socket.on(SOCKET_EVENTS.MY_ROOM_INFO, roomData => {
     roomLogicHandler(roomData);
+    console.log('data room', roomData);
 });

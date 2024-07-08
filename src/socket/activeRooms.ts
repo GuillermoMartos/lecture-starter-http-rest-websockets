@@ -5,7 +5,7 @@ const TEXTS_LENGTH = textObj.texts.length;
 export interface Update_User_WS_Request {
     roomName: string;
     username: string;
-    update: User_Room_Info;
+    update: Partial<User_Room_Info>;
 }
 
 export interface User_Room_Info {
@@ -108,9 +108,17 @@ class ActiveRooms {
         return null;
     }
 
-    public updateUserInRoom(roomName: string, username: string, update: User_Room_Info): void {
+    public updateUserInRoom(roomName: string, username: string, update: Partial<User_Room_Info>): void {
         if (this.rooms[roomName] && this.rooms[roomName].roomInfo.users.has(username)) {
-            this.rooms[roomName].roomInfo.users.set(username, update);
+            const currentUserInfo = this.rooms[roomName].roomInfo.users.get(username);
+
+            if (currentUserInfo) {
+                const updatedUserInfo: User_Room_Info = {
+                    ...currentUserInfo,
+                    ...update
+                };
+                this.rooms[roomName].roomInfo.users.set(username, updatedUserInfo);
+            }
         }
     }
 

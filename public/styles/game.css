@@ -38,6 +38,8 @@
 }
 
 #text-container {
+    display: flex;
+    white-space: pre;
     font-size: large;
 }
 
@@ -73,4 +75,8 @@
 
 .finished {
     background-color: greenyellow !important;
+}
+
+.underline-letter {
+    text-decoration: underline;
 }
