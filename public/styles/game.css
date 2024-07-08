@@ -16,9 +16,11 @@
     margin: 25px;
     margin-left: 20vw;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: space-around;
     align-items: center;
     position: relative;
+
 }
 
 #ready-btn {
@@ -31,7 +33,7 @@
 }
 
 #timer {
-    font-size: xx-large;
+    font-size: medium;
     font-weight: bold;
 }
 

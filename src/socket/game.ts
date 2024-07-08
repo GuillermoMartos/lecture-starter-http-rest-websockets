@@ -3,6 +3,7 @@ import { activeUsers } from './activeUsers.js';
 import { Update_User_WS_Request, activeRooms } from './activeRooms.js';
 import { SOCKET_EVENTS } from './constants.js';
 import * as config from './config.js';
+import { castUserRoomToResponseJSON } from './helpers.js';
 
 export default (namespace: Namespace) => {
     namespace.on(SOCKET_EVENTS.CONNECTION, socket => {
@@ -14,8 +15,14 @@ export default (namespace: Namespace) => {
         } else {
             activeUsers.addUser(username);
             console.log('Connected user:', username, socket.id);
+            // message for rest of users
             socket.broadcast.emit(SOCKET_EVENTS.USER_JOINED, {
                 new_user: username,
+                activeUsers: activeUsers.getUsers().size
+            });
+            // message for just joined self user
+            socket.emit(SOCKET_EVENTS.USER_JOINED, {
+                new_user: 'you',
                 activeUsers: activeUsers.getUsers().size
             });
         }
@@ -50,7 +57,11 @@ export default (namespace: Namespace) => {
 
             if (activeRooms.getRoomUserCounter(roomName) <= config.MAXIMUM_USERS_FOR_ONE_ROOM) {
                 socket.join(roomName);
-                namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(roomName));
+                const usersRoomInfo = activeRooms.getRoomUsers(roomName);
+                const roomInfo = castUserRoomToResponseJSON(activeRooms.checkRoomReadyToPlay(roomName));
+                namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
+                namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, roomInfo);
+
                 socket.broadcast.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
             } else {
                 socket.emit(SOCKET_EVENTS.INVALID_CHECKED_ROOM_NAME, {
@@ -63,7 +74,10 @@ export default (namespace: Namespace) => {
         socket.on(SOCKET_EVENTS.UPDATE_USER_ROOM_INFO, (requestUserData: Update_User_WS_Request) => {
             const { roomName, username, update } = requestUserData;
             activeRooms.updateUserInRoom(roomName, username, update);
-            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(roomName));
+            const usersRoomInfo = activeRooms.getRoomUsers(roomName);
+            const roomInfo = castUserRoomToResponseJSON(activeRooms.checkRoomReadyToPlay(roomName));
+            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
+            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, roomInfo);
         });
 
         socket.on(SOCKET_EVENTS.LEAVE_ROOM, roomName => {
@@ -74,8 +88,11 @@ export default (namespace: Namespace) => {
                 socket.rooms.delete(isemptyRoomSpace);
                 return;
             }
-            //this will also be necesary info for the self socket user
-            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(roomName));
+
+            const usersRoomInfo = activeRooms.getRoomUsers(roomName);
+            const roomInfo = castUserRoomToResponseJSON(activeRooms.checkRoomReadyToPlay(roomName));
+            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
+            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, roomInfo);
         });
 
         socket.on(SOCKET_EVENTS.DISCONNECT, reason => {
@@ -85,6 +102,7 @@ export default (namespace: Namespace) => {
                 namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
                 if (isemptyRoomSpace) {
                     socket.rooms.delete(userActiveRoom);
+                    activeUsers.removeUser(username);
                     return;
                 }
                 namespace.to(userActiveRoom).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(userActiveRoom));

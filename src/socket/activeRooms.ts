@@ -1,19 +1,26 @@
+import textObj from '../data.js';
+import { SERVER_MESSAGGES } from './constants.js';
+const TEXTS_LENGTH = textObj.texts.length;
+
 export interface Update_User_WS_Request {
     roomName: string;
     username: string;
     update: User_Room_Info;
 }
 
-interface User_Room_Info {
+export interface User_Room_Info {
     ready: boolean;
     progress: number;
 }
 
-interface Room_Info {
+export interface Room_Info {
+    roomName: string;
     users: Map<string, User_Room_Info>;
     userCount: number;
     isRoomFull: boolean;
+    isReady: boolean;
     isPlaying: boolean;
+    textChallenge: null | string;
 }
 
 class ActiveRooms {
@@ -38,7 +45,10 @@ class ActiveRooms {
                     users: new Map<string, User_Room_Info>(),
                     userCount: 0,
                     isPlaying: false,
-                    isRoomFull: false
+                    isRoomFull: false,
+                    isReady: false,
+                    textChallenge: null,
+                    roomName
                 }
             };
         }
@@ -49,7 +59,7 @@ class ActiveRooms {
     }
 
     public addUserToRoom(roomName: string, username: string): void {
-        this.addRoom(roomName); // Ensure the room exists
+        this.addRoom(roomName);
         if (!this.rooms[roomName].roomInfo.users.has(username)) {
             this.rooms[roomName].roomInfo.users.set(username, { ready: false, progress: 0 });
             this.rooms[roomName].roomInfo.userCount++;
@@ -101,6 +111,40 @@ class ActiveRooms {
     public updateUserInRoom(roomName: string, username: string, update: User_Room_Info): void {
         if (this.rooms[roomName] && this.rooms[roomName].roomInfo.users.has(username)) {
             this.rooms[roomName].roomInfo.users.set(username, update);
+        }
+    }
+
+    public checkRoomReadyToPlay(roomName: string): Room_Info {
+        const users = this.rooms[roomName].roomInfo.users;
+        const readyUsersCount = Array.from(users.values()).filter(user => user.ready).length;
+        const userCount = this.rooms[roomName].roomInfo.userCount;
+
+        if (userCount === 3) {
+            this.rooms[roomName].roomInfo.isRoomFull = true;
+        } else {
+            this.rooms[roomName].roomInfo.isRoomFull = false;
+        }
+
+        if (readyUsersCount === 3 || (readyUsersCount === 2 && userCount === 2)) {
+            this.rooms[roomName].roomInfo.isReady = true;
+        } else {
+            this.rooms[roomName].roomInfo.isReady = false;
+        }
+
+        return this.rooms[roomName].roomInfo;
+    }
+
+    public getOrAssignTextChallenge(roomName: string): string {
+        if (!this.rooms[roomName]) {
+            return `${SERVER_MESSAGGES.UNABLE_TO_FIND_ROOM} Room searched: ${roomName}`;
+        }
+        const isTextChallengeAssigned = this.rooms[roomName].roomInfo.textChallenge;
+        if (isTextChallengeAssigned) {
+            return isTextChallengeAssigned;
+        } else {
+            const randomText = textObj.texts[Math.floor(Math.random() * TEXTS_LENGTH)];
+            this.rooms[roomName].roomInfo.textChallenge = randomText;
+            return randomText;
         }
     }
 }
