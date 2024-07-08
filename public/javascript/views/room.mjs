@@ -51,13 +51,13 @@ const getNumberOfUsersString = numberOfUsers => `${numberOfUsers} connected`;
 
 const removeRoomElement = name => document.querySelector(`.room[data-room-name='${name}']`)?.remove();
 
-const showRoomJoined = (elementsToHide, elementToShow) => {
-    elementsToHide.forEach(element => removeClass(element, 'display-none'));
+const showRoomJoined = (elementToHide, elementToShow) => {
+    removeClass(elementToHide, 'display-none');
     addClass(elementToShow, 'display-none');
 };
 
-const hideRoomJoined = (elementsToHide, elementToShow) => {
-    elementsToHide.forEach(element => addClass(element, 'display-none'));
+const hideRoomJoined = (elementToHide, elementToShow) => {
+    addClass(elementToHide, 'display-none');
     removeClass(elementToShow, 'display-none');
 };
 

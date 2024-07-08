@@ -15,7 +15,7 @@ const setActiveRoomId = roomId => {
 const socket = io('http://localhost:3001/game', { query: { username } });
 const createRoomButton = document.getElementById('add-room-btn');
 const gameJoinedRoomName = document.getElementById('room-name');
-const allNotDisplayedRoomElements = document.querySelectorAll('.display-none');
+const roomGameParentElement = document.getElementById('game-page');
 const roomsElementParent = document.getElementById('rooms-page');
 const quitRoomBtn = document.getElementById('quit-room-btn');
 const readyRoomBtn = document.getElementById('ready-btn');
@@ -33,12 +33,12 @@ function onJoinLogic(element) {
     setActiveRoomId(roomName);
     socket.emit(SOCKET_EVENTS.JOIN_ROOM, roomName);
     gameJoinedRoomName.innerText = roomName;
-    showRoomJoined(allNotDisplayedRoomElements, roomsElementParent);
+    showRoomJoined(roomGameParentElement, roomsElementParent);
 }
 
 function backToRoomsDisplayer() {
     const roomName = getRoomName();
-    hideRoomJoined(allNotDisplayedRoomElements, roomsElementParent);
+    hideRoomJoined(roomGameParentElement, roomsElementParent);
     setActiveRoomId(null);
     removeUserElement(username);
     socket.emit(SOCKET_EVENTS.LEAVE_ROOM, roomName);

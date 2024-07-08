@@ -68,21 +68,26 @@ export default (namespace: Namespace) => {
 
         socket.on(SOCKET_EVENTS.LEAVE_ROOM, roomName => {
             socket.leave(roomName);
-            activeRooms.removeUserFromRoom(roomName, username);
+            const isemptyRoomSpace = activeRooms.removeUserFromRoom(roomName, username);
+            if (isemptyRoomSpace) {
+                namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
+                socket.rooms.delete(isemptyRoomSpace);
+                return;
+            }
             //this will also be necesary info for the self socket user
             namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(roomName));
-            namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
         });
 
         socket.on(SOCKET_EVENTS.DISCONNECT, reason => {
             const userActiveRoom = activeRooms.getRoomByUser(username);
             if (userActiveRoom) {
                 const isemptyRoomSpace = activeRooms.removeUserFromRoom(userActiveRoom, username);
-                namespace.to(userActiveRoom).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(userActiveRoom));
-                namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
                 if (isemptyRoomSpace) {
+                    namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
                     socket.rooms.delete(userActiveRoom);
+                    return;
                 }
+                namespace.to(userActiveRoom).emit(SOCKET_EVENTS.MY_ROOM_INFO, activeRooms.getRoomUsers(userActiveRoom));
             }
             activeUsers.removeUser(username);
             console.log(`Disconnected user ${username}. Reason: ${reason}`);
