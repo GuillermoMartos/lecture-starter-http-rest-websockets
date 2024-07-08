@@ -1,12 +1,14 @@
 import { SECONDS_FOR_GAME, SECONDS_TIMER_BEFORE_START_GAME, SOCKET_EVENTS } from '../constants/constants.mjs';
 import { socket, updateUserProgress } from '../game.mjs';
 import { fetchRandomText } from '../services/textService.js';
+import { showResultsModal } from '../views/modal.mjs';
 import { addClass, createElement, removeClass } from './dom-helper.mjs';
 
 const roomChallengeTimer = document.getElementById('timer');
 const roomGetReadyTimer = document.getElementById('game-timer');
 const quitRoomBtn = document.getElementById('quit-room-btn');
 const readyRoomBtn = document.getElementById('ready-btn');
+const textContainer = document.getElementById('text-container');
 
 function implantHiddenLetterElements(textContainer, textChallenge) {
     for (let index = 0; index < textChallenge.length; index++) {
@@ -20,7 +22,7 @@ function implantHiddenLetterElements(textContainer, textChallenge) {
     }
 }
 
-function startChallenge(textContainer, textChallenge, roomName) {
+function startChallenge(textChallenge, roomName) {
     implantHiddenLetterElements(textContainer, textChallenge);
     let decreaserChallengeTime = SECONDS_FOR_GAME;
     let currentCharIndex = 0;
@@ -43,13 +45,13 @@ function startChallenge(textContainer, textChallenge, roomName) {
 
         if (keyPressed === expectedChar) {
             const progress = ((currentCharIndex / textChallenge.length) * 100).toFixed(0);
-            updateUserProgress(progress, roomName);
+            updateUserProgress(progress, roomName, decreaserChallengeTime);
             removeClass(currentLetterElement, 'underline-letter');
             addClass(currentLetterElement, 'finished');
             if (currentCharIndex + 1 === textChallenge.length) {
                 document.removeEventListener('keydown', keyStrokesListener);
                 const finalProgress = 100;
-                updateUserProgress(finalProgress, roomName);
+                updateUserProgress(finalProgress, roomName, decreaserChallengeTime);
             }
             addClass(nextLetterElement, 'underline-letter');
             currentCharIndex++;
@@ -59,7 +61,6 @@ function startChallenge(textContainer, textChallenge, roomName) {
 }
 
 async function showGetingReadyInfo(roomName) {
-    const textContainer = document.getElementById('text-container');
     const fetchTextResponse = await fetchRandomText(roomName);
     textContainer.innerText = '';
     const getReadyTimerSeconds = document.getElementById('game-timer-seconds');
@@ -77,11 +78,33 @@ async function showGetingReadyInfo(roomName) {
             removeClass(textContainer, 'display-none');
             removeClass(roomChallengeTimer, 'display-none');
             clearInterval(getReadyInterval);
-            startChallenge(textContainer, fetchTextResponse, roomName);
+            startChallenge(fetchTextResponse, roomName);
         }
     }, 1000);
 }
 
+function sortPlayerResultsByTimeFinished(roomData) {
+    const sortedUsernames = roomData.users
+        .sort((a, b) => b[1].timeFinished - a[1].timeFinished) // Ordena de mayor a menor
+        .map(user => user[0]); // Extrae los nombres de los usuarios
+
+    console.log(sortedUsernames);
+    return sortedUsernames;
+}
+
 export async function handleGameStart(roomData) {
     showGetingReadyInfo(roomData.roomName);
+}
+
+export function handleGameFinish(roomData) {
+    addClass(roomChallengeTimer, 'display-none');
+    addClass(textContainer, 'display-none');
+    textContainer.innerHTML = '';
+    const sortedUsersPosition = sortPlayerResultsByTimeFinished(roomData);
+    showResultsModal({
+        usersSortedArray: sortedUsersPosition
+    });
+    removeClass(quitRoomBtn, 'display-none');
+    readyRoomBtn.innerText = 'READY';
+    removeClass(readyRoomBtn, 'display-none');
 }

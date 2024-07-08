@@ -2,7 +2,7 @@ import { showInputModal, showMessageModal } from './views/modal.mjs';
 import { SOCKET_EVENTS } from './constants/constants.mjs';
 import { appendRoomElement, hideRoomJoined, showRoomJoined } from './views/room.mjs';
 import { appendUserElement, changeReadyStatus, removeUserElement, setProgress } from './views/user.mjs';
-import { handleGameStart } from './helpers/game-helper.js';
+import { handleGameFinish, handleGameStart } from './helpers/game-helper.js';
 
 const username = sessionStorage.getItem('username');
 if (!username) {
@@ -106,11 +106,11 @@ function setPlayerReady() {
     });
 }
 
-export function updateUserProgress(progress, roomName) {
+export function updateUserProgress(progress, roomName, timeFinished) {
     socket.emit(SOCKET_EVENTS.UPDATE_USER_ROOM_INFO, {
         roomName,
         username: username,
-        update: { progress }
+        update: { progress, timeFinished }
     });
 }
 
@@ -118,6 +118,11 @@ async function roomLogicHandler(roomData) {
     if (roomData.isReady && !gameStarted) {
         setGameStarted(true);
         handleGameStart(roomData);
+    }
+    if (roomData.isGameDone) {
+        setGameStarted(null);
+        handleGameFinish(roomData);
+        socket.emit(SOCKET_EVENTS.RESET_ROOM_INFO, roomData.roomName);
     }
 }
 

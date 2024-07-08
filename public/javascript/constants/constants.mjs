@@ -11,7 +11,8 @@ export const SOCKET_EVENTS = {
     MY_ROOM_INFO: 'my_room_info',
     MY_ROOM_USER_INFO: 'my_room_user_info',
     UPDATE_USER_ROOM_INFO: 'update_user_room_info',
-    UPDATE_ROOM_INFO: 'update_room_info'
+    UPDATE_ROOM_INFO: 'update_room_info',
+    RESET_ROOM_INFO: 'reset_room_info'
 };
 
 export const SECONDS_TIMER_BEFORE_START_GAME = 5;

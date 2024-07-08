@@ -11,6 +11,7 @@ export interface Update_User_WS_Request {
 export interface User_Room_Info {
     ready: boolean;
     progress: number;
+    timeFinished: number;
 }
 
 export interface Room_Info {
@@ -21,6 +22,7 @@ export interface Room_Info {
     isReady: boolean;
     isPlaying: boolean;
     textChallenge: null | string;
+    isGameDone: boolean;
 }
 
 class ActiveRooms {
@@ -48,7 +50,8 @@ class ActiveRooms {
                     isRoomFull: false,
                     isReady: false,
                     textChallenge: null,
-                    roomName
+                    roomName,
+                    isGameDone: false
                 }
             };
         }
@@ -61,7 +64,7 @@ class ActiveRooms {
     public addUserToRoom(roomName: string, username: string): void {
         this.addRoom(roomName);
         if (!this.rooms[roomName].roomInfo.users.has(username)) {
-            this.rooms[roomName].roomInfo.users.set(username, { ready: false, progress: 0 });
+            this.rooms[roomName].roomInfo.users.set(username, { ready: false, progress: 0, timeFinished: 0 });
             this.rooms[roomName].roomInfo.userCount++;
         }
     }
@@ -153,6 +156,41 @@ class ActiveRooms {
             const randomText = textObj.texts[Math.floor(Math.random() * TEXTS_LENGTH)];
             this.rooms[roomName].roomInfo.textChallenge = randomText;
             return randomText;
+        }
+    }
+
+    public checkRoomWinner(roomName: string): void {
+        if (this.rooms[roomName]) {
+            const users = this.rooms[roomName].roomInfo.users;
+            const allUsersHaveFullProgress = Array.from(users.values()).every(userInfo => userInfo.progress === 100);
+            if (allUsersHaveFullProgress) {
+                this.rooms[roomName].roomInfo.isGameDone = true;
+            }
+        }
+    }
+
+    public resetRoomInfo(roomName: string): void {
+        if (this.rooms[roomName]) {
+            const users = this.rooms[roomName].roomInfo.users;
+
+            users.forEach((userInfo, username) => {
+                users.set(username, {
+                    ready: false,
+                    progress: 0,
+                    timeFinished: 0
+                });
+            });
+
+            const previousRoomInfo = this.rooms[roomName].roomInfo;
+            this.rooms[roomName].roomInfo = {
+                ...previousRoomInfo,
+                isPlaying: false,
+                isRoomFull: false,
+                isReady: false,
+                textChallenge: null,
+                roomName,
+                isGameDone: false
+            };
         }
     }
 }

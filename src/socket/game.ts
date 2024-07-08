@@ -74,6 +74,15 @@ export default (namespace: Namespace) => {
         socket.on(SOCKET_EVENTS.UPDATE_USER_ROOM_INFO, (requestUserData: Update_User_WS_Request) => {
             const { roomName, username, update } = requestUserData;
             activeRooms.updateUserInRoom(roomName, username, update);
+            activeRooms.checkRoomWinner(roomName);
+            const usersRoomInfo = activeRooms.getRoomUsers(roomName);
+            const roomInfo = castUserRoomToResponseJSON(activeRooms.checkRoomReadyToPlay(roomName));
+            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
+            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, roomInfo);
+        });
+
+        socket.on(SOCKET_EVENTS.RESET_ROOM_INFO, roomName => {
+            activeRooms.resetRoomInfo(roomName);
             const usersRoomInfo = activeRooms.getRoomUsers(roomName);
             const roomInfo = castUserRoomToResponseJSON(activeRooms.checkRoomReadyToPlay(roomName));
             namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
