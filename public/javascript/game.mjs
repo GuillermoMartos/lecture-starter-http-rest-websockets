@@ -1,8 +1,9 @@
 import { showInputModal, showMessageModal } from './views/modal.mjs';
-import { SOCKET_EVENTS } from './constants/constants.mjs';
+import { SOCKET_EVENTS, useDeploySolution } from './constants/constants.mjs';
 import { appendRoomElement, hideRoomJoined, showRoomJoined } from './views/room.mjs';
 import { appendUserElement, changeReadyStatus, removeUserElement, setProgress } from './views/user.mjs';
 import { handleGameFinish, handleGameStart } from './helpers/game-helper.js';
+useDeploySolution;
 
 const username = sessionStorage.getItem('username');
 if (!username) {
@@ -17,7 +18,11 @@ let gameStarted = null;
 const setGameStarted = isStarted => {
     gameStarted = isStarted;
 };
-export const socket = io('http://localhost:3001/game', { query: { username } });
+
+const wsUrl = useDeploySolution
+    ? 'https://lecture-starter-http-rest-websockets-6z7d.onrender.com/game'
+    : 'http://localhost:3001/game';
+export const socket = io(wsUrl, { query: { username } });
 const createRoomButton = document.getElementById('add-room-btn');
 const gameJoinedRoomName = document.getElementById('room-name');
 const roomGameParentElement = document.getElementById('game-page');

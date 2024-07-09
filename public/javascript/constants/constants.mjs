@@ -18,3 +18,5 @@ export const SOCKET_EVENTS = {
 
 export const SECONDS_TIMER_BEFORE_START_GAME = 5;
 export const SECONDS_FOR_GAME = 120;
+//se this variable to false to use localhost
+export const useDeploySolution = true;

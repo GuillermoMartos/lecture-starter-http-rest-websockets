@@ -1,3 +1,8 @@
+# Deployed version:
+
+**The project will be seted for deployed use of the server hosted in Render. In case you want to**
+**use in local or developmnet environment, please change useDeploySolution variable in public/javascript/constants.mjs**
+
 # HTTP, REST, WebSockets
 
 ## 🏃‍♂️ Simple start
