@@ -1,7 +1,7 @@
 import { SECONDS_FOR_GAME, SECONDS_TIMER_BEFORE_START_GAME, SOCKET_EVENTS } from '../constants/constants.mjs';
 import { socket, updateUserProgress } from '../game.mjs';
 import { fetchRandomText } from '../services/textService.js';
-import { showResultsModal } from '../views/modal.mjs';
+import { showMessageModal, showResultsModal } from '../views/modal.mjs';
 import { addClass, createElement, removeClass } from './dom-helper.mjs';
 
 const roomChallengeTimer = document.getElementById('timer');
@@ -34,6 +34,13 @@ function startChallenge(textChallenge, roomName) {
         } else {
             addClass(textContainer, DISPLAY_NONE_CLASS);
             clearInterval(challengeInterval);
+            document.removeEventListener('keydown', keyStrokesListener);
+            showMessageModal({
+                message: 'Time is out. I guess you all lose 💁‍♀️',
+                onClose: () => {
+                    window.location.replace('/signin');
+                }
+            });
         }
     }, 1000);
 
