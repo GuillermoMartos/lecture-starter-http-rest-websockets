@@ -1,7 +1,7 @@
 import { Namespace } from 'socket.io';
 import { activeUsers } from './activeUsers.js';
 import { Update_User_WS_Request, activeRooms } from './activeRooms.js';
-import { SOCKET_EVENTS } from './constants.js';
+import { SERVER_MESSAGGES, SOCKET_EVENTS } from './constants.js';
 import * as config from './config.js';
 import { castUserRoomToResponseJSON, updateRoomAndRoomUsersInfo } from './helpers.js';
 
@@ -87,6 +87,14 @@ export default (namespace: Namespace) => {
             }
             namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
             namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, roomInfo);
+        });
+
+        socket.on(SOCKET_EVENTS.INTERRUPT_GAME, roomName => {
+            activeRooms.removeRoom(roomName);
+            namespace.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
+            namespace
+                .to(roomName)
+                .emit(SOCKET_EVENTS.MY_ROOM_INFO, { warningMessage: SERVER_MESSAGGES.INTERRUPT_GAME_ADVISE });
         });
 
         socket.on(SOCKET_EVENTS.DISCONNECT, reason => {

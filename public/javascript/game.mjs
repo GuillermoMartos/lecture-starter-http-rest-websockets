@@ -121,6 +121,13 @@ export function updateUserProgress(progress, roomName, timeFinished) {
 }
 
 async function roomLogicHandler(roomData) {
+    if (roomData.isRestartedGame) {
+        const oneTimeClickHandler = () => {
+            socket.emit(SOCKET_EVENTS.INTERRUPT_GAME, roomData.roomName);
+            quitRoomBtn.removeEventListener('click', onClickHandler);
+        };
+        quitRoomBtn.addEventListener('click', oneTimeClickHandler);
+    }
     if (roomData.isReady && !gameStarted) {
         setGameStarted(true);
         handleGameStart(roomData);
@@ -169,5 +176,14 @@ socket.on(SOCKET_EVENTS.MY_ROOM_USER_INFO, roomUsersData => {
 });
 
 socket.on(SOCKET_EVENTS.MY_ROOM_INFO, roomData => {
+    const { warningMessage } = roomData;
+    if (warningMessage) {
+        showMessageModal({
+            message: warningMessage,
+            onClose: () => {
+                window.location.replace('/signin');
+            }
+        });
+    }
     roomLogicHandler(roomData);
 });
