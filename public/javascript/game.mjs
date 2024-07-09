@@ -76,9 +76,15 @@ function refreshDOMActiveRooms(activeRooms) {
     const roomsContainer = document.querySelector('#rooms-wrapper');
     roomsContainer.innerHTML = '';
     for (const room in activeRooms) {
+        if (activeRooms[room].isReady) {
+            break;
+        }
+        if (activeRooms[room].isRoomFull) {
+            break;
+        }
         appendRoomElement({
             name: room,
-            numberOfUsers: activeRooms[room],
+            numberOfUsers: activeRooms[room].userCount,
             onJoin: element => {
                 onJoinLogic(element);
             }
@@ -146,7 +152,6 @@ socket.on(SOCKET_EVENTS.USER_JOINED, data => {
         message: `${new_user} has joined. ${activeUsers} users online now.`,
         placeModalInOtherElement: usersLoggedWrapper
     });
-    console.log(`${new_user} has joined. ${activeUsers} users online now.`);
 });
 
 socket.on(SOCKET_EVENTS.INVALID_CHECKED_ROOM_NAME, ({ message, activeRooms }) => {
@@ -161,10 +166,8 @@ socket.on(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms => {
 
 socket.on(SOCKET_EVENTS.MY_ROOM_USER_INFO, roomUsersData => {
     roomUserDataMapper(roomUsersData);
-    console.log('data user', roomUsersData);
 });
 
 socket.on(SOCKET_EVENTS.MY_ROOM_INFO, roomData => {
     roomLogicHandler(roomData);
-    console.log('data room', roomData);
 });

@@ -20,9 +20,9 @@ export interface Room_Info {
     userCount: number;
     isRoomFull: boolean;
     isReady: boolean;
-    isPlaying: boolean;
     textChallenge: null | string;
     isGameDone: boolean;
+    isRestartedGame: boolean;
 }
 
 class ActiveRooms {
@@ -46,12 +46,12 @@ class ActiveRooms {
                 roomInfo: {
                     users: new Map<string, User_Room_Info>(),
                     userCount: 0,
-                    isPlaying: false,
                     isRoomFull: false,
                     isReady: false,
                     textChallenge: null,
                     roomName,
-                    isGameDone: false
+                    isGameDone: false,
+                    isRestartedGame: false
                 }
             };
         }
@@ -90,10 +90,15 @@ class ActiveRooms {
         return Array.from(this.rooms[roomName].roomInfo.users);
     }
 
-    public getActiveRooms(): { [key: string]: number } {
-        const activeRooms: { [key: string]: number } = {};
+    public getActiveRooms(): { [key: string]: { userCount: number; isReady: boolean; isRoomFull: boolean } } {
+        const activeRooms: { [key: string]: { userCount: number; isReady: boolean; isRoomFull: boolean } } = {};
         for (const roomName in this.rooms) {
-            activeRooms[roomName] = this.rooms[roomName].roomInfo.userCount;
+            const roomInfo = this.rooms[roomName].roomInfo;
+            activeRooms[roomName] = {
+                userCount: roomInfo.userCount,
+                isReady: roomInfo.isReady,
+                isRoomFull: roomInfo.isRoomFull
+            };
         }
         return activeRooms;
     }
@@ -138,8 +143,6 @@ class ActiveRooms {
 
         if (readyUsersCount === 3 || (readyUsersCount === 2 && userCount === 2)) {
             this.rooms[roomName].roomInfo.isReady = true;
-        } else {
-            this.rooms[roomName].roomInfo.isReady = false;
         }
 
         return this.rooms[roomName].roomInfo;
@@ -184,12 +187,12 @@ class ActiveRooms {
             const previousRoomInfo = this.rooms[roomName].roomInfo;
             this.rooms[roomName].roomInfo = {
                 ...previousRoomInfo,
-                isPlaying: false,
                 isRoomFull: false,
                 isReady: false,
                 textChallenge: null,
                 roomName,
-                isGameDone: false
+                isGameDone: false,
+                isRestartedGame: true
             };
         }
     }

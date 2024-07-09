@@ -51,6 +51,7 @@ function startChallenge(textChallenge, roomName) {
             if (currentCharIndex + 1 === textChallenge.length) {
                 document.removeEventListener('keydown', keyStrokesListener);
                 const finalProgress = 100;
+                clearInterval(challengeInterval);
                 updateUserProgress(finalProgress, roomName, decreaserChallengeTime);
             }
             addClass(nextLetterElement, 'underline-letter');
@@ -68,7 +69,6 @@ async function showGetingReadyInfo(roomName) {
     addClass(quitRoomBtn, 'display-none');
     removeClass(roomGetReadyTimer, 'display-none');
     let decreaserGetReadyTimer = SECONDS_TIMER_BEFORE_START_GAME;
-    decreaserGetReadyTimer = 1; //borrame luegooooooo!!!
     const getReadyInterval = setInterval(() => {
         if (decreaserGetReadyTimer > 0) {
             getReadyTimerSeconds.innerText = decreaserGetReadyTimer;
@@ -84,12 +84,9 @@ async function showGetingReadyInfo(roomName) {
 }
 
 function sortPlayerResultsByTimeFinished(roomData) {
-    const sortedUsernames = roomData.users
-        .sort((a, b) => b[1].timeFinished - a[1].timeFinished) // Ordena de mayor a menor
-        .map(user => user[0]); // Extrae los nombres de los usuarios
-
-    console.log(sortedUsernames);
-    return sortedUsernames;
+    const sortedUsersByTimeFinished = roomData.users.sort((a, b) => b[1].timeFinished - a[1].timeFinished);
+    const getOnlySortedUsernames = sortedUsersByTimeFinished.map(user => user[0]);
+    return getOnlySortedUsernames;
 }
 
 export async function handleGameStart(roomData) {
