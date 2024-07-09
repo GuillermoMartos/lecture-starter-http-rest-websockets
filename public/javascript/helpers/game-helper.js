@@ -9,6 +9,7 @@ const roomGetReadyTimer = document.getElementById('game-timer');
 const quitRoomBtn = document.getElementById('quit-room-btn');
 const readyRoomBtn = document.getElementById('ready-btn');
 const textContainer = document.getElementById('text-container');
+const DISPLAY_NONE_CLASS = 'display-none';
 
 function implantHiddenLetterElements(textContainer, textChallenge) {
     for (let index = 0; index < textChallenge.length; index++) {
@@ -31,7 +32,7 @@ function startChallenge(textChallenge, roomName) {
             roomChallengeTimer.innerText = `Seconds left: ${decreaserChallengeTime}`;
             decreaserChallengeTime--;
         } else {
-            addClass(textContainer, 'display-none');
+            addClass(textContainer, DISPLAY_NONE_CLASS);
             clearInterval(challengeInterval);
         }
     }, 1000);
@@ -65,18 +66,18 @@ async function showGetingReadyInfo(roomName) {
     const fetchTextResponse = await fetchRandomText(roomName);
     textContainer.innerText = '';
     const getReadyTimerSeconds = document.getElementById('game-timer-seconds');
-    addClass(readyRoomBtn, 'display-none');
-    addClass(quitRoomBtn, 'display-none');
-    removeClass(roomGetReadyTimer, 'display-none');
+    addClass(readyRoomBtn, DISPLAY_NONE_CLASS);
+    addClass(quitRoomBtn, DISPLAY_NONE_CLASS);
+    removeClass(roomGetReadyTimer, DISPLAY_NONE_CLASS);
     let decreaserGetReadyTimer = SECONDS_TIMER_BEFORE_START_GAME;
     const getReadyInterval = setInterval(() => {
         if (decreaserGetReadyTimer > 0) {
             getReadyTimerSeconds.innerText = decreaserGetReadyTimer;
             decreaserGetReadyTimer--;
         } else {
-            addClass(roomGetReadyTimer, 'display-none');
-            removeClass(textContainer, 'display-none');
-            removeClass(roomChallengeTimer, 'display-none');
+            addClass(roomGetReadyTimer, DISPLAY_NONE_CLASS);
+            removeClass(textContainer, DISPLAY_NONE_CLASS);
+            removeClass(roomChallengeTimer, DISPLAY_NONE_CLASS);
             clearInterval(getReadyInterval);
             startChallenge(fetchTextResponse, roomName);
         }
@@ -94,14 +95,14 @@ export async function handleGameStart(roomData) {
 }
 
 export function handleGameFinish(roomData) {
-    addClass(roomChallengeTimer, 'display-none');
-    addClass(textContainer, 'display-none');
+    addClass(roomChallengeTimer, DISPLAY_NONE_CLASS);
+    addClass(textContainer, DISPLAY_NONE_CLASS);
     textContainer.innerHTML = '';
     const sortedUsersPosition = sortPlayerResultsByTimeFinished(roomData);
     showResultsModal({
         usersSortedArray: sortedUsersPosition
     });
-    removeClass(quitRoomBtn, 'display-none');
+    removeClass(quitRoomBtn, DISPLAY_NONE_CLASS);
     readyRoomBtn.innerText = 'READY';
-    removeClass(readyRoomBtn, 'display-none');
+    removeClass(readyRoomBtn, DISPLAY_NONE_CLASS);
 }

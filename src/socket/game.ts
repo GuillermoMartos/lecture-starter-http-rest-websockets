@@ -3,7 +3,7 @@ import { activeUsers } from './activeUsers.js';
 import { Update_User_WS_Request, activeRooms } from './activeRooms.js';
 import { SOCKET_EVENTS } from './constants.js';
 import * as config from './config.js';
-import { castUserRoomToResponseJSON } from './helpers.js';
+import { castUserRoomToResponseJSON, updateRoomAndRoomUsersInfo } from './helpers.js';
 
 export default (namespace: Namespace) => {
     namespace.on(SOCKET_EVENTS.CONNECTION, socket => {
@@ -57,17 +57,8 @@ export default (namespace: Namespace) => {
 
             if (activeRooms.getRoomUserCounter(roomName) <= config.MAXIMUM_USERS_FOR_ONE_ROOM) {
                 socket.join(roomName);
-                const usersRoomInfo = activeRooms.getRoomUsers(roomName);
-                const roomInfo = castUserRoomToResponseJSON(activeRooms.checkRoomReadyToPlay(roomName));
-                namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
-                namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, roomInfo);
-
+                updateRoomAndRoomUsersInfo(roomName, namespace);
                 socket.broadcast.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
-            } else {
-                socket.emit(SOCKET_EVENTS.INVALID_CHECKED_ROOM_NAME, {
-                    message: `Room ${roomName} is full. Choose another.`,
-                    activeRooms: activeRooms.getActiveRooms()
-                });
             }
         });
 
@@ -75,19 +66,13 @@ export default (namespace: Namespace) => {
             const { roomName, username, update } = requestUserData;
             activeRooms.updateUserInRoom(roomName, username, update);
             activeRooms.checkRoomWinner(roomName);
-            const roomInfo = castUserRoomToResponseJSON(activeRooms.checkRoomReadyToPlay(roomName));
-            const usersRoomInfo = activeRooms.getRoomUsers(roomName);
-            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
-            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, roomInfo);
+            updateRoomAndRoomUsersInfo(roomName, namespace);
             socket.broadcast.emit(SOCKET_EVENTS.ACTIVE_ROOMS_INFO, activeRooms.getActiveRooms());
         });
 
         socket.on(SOCKET_EVENTS.RESET_ROOM_INFO, roomName => {
             activeRooms.resetRoomInfo(roomName);
-            const roomInfo = castUserRoomToResponseJSON(activeRooms.checkRoomReadyToPlay(roomName));
-            const usersRoomInfo = activeRooms.getRoomUsers(roomName);
-            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
-            namespace.to(roomName).emit(SOCKET_EVENTS.MY_ROOM_INFO, roomInfo);
+            updateRoomAndRoomUsersInfo(roomName, namespace);
         });
 
         socket.on(SOCKET_EVENTS.LEAVE_ROOM, roomName => {
@@ -109,10 +94,7 @@ export default (namespace: Namespace) => {
             if (userActiveRoom) {
                 const isemptyRoomSpace = activeRooms.removeUserFromRoom(userActiveRoom, username);
                 if (!isemptyRoomSpace) {
-                    const roomInfo = castUserRoomToResponseJSON(activeRooms.checkRoomReadyToPlay(userActiveRoom));
-                    namespace.to(userActiveRoom).emit(SOCKET_EVENTS.MY_ROOM_INFO, roomInfo);
-                    const usersRoomInfo = activeRooms.getRoomUsers(userActiveRoom);
-                    namespace.to(userActiveRoom).emit(SOCKET_EVENTS.MY_ROOM_USER_INFO, usersRoomInfo);
+                    updateRoomAndRoomUsersInfo(userActiveRoom, namespace);
                 }
                 if (isemptyRoomSpace) {
                     socket.rooms.delete(userActiveRoom);
